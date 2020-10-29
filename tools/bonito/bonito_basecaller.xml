@@ -49,7 +49,7 @@ bonito basecaller '$model'
     '$out_sam'
 #elif '$output_format' == "fastq":
     '$out_fastq'
-#else:
+#elif '$output_format' == "fasta":
     '$out_fasta'
 #end if
     ]]></command>
