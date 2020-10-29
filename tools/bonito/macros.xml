@@ -27,11 +27,11 @@
     -->
     <token name="@INITIALIZE@"><![CDATA[
 mkdir -p './data' &&
-#if '$input_fast5.metadata.type' == 'fast5.tar':
+#if $input_fast5.metadata.type == 'fast5.tar':
     tar -xf '$input_fast5'  -C ./data &&
-#elif '$input_fast5.metadata.type' == 'fast5.tar.gz':
+#elif $input_fast5.metadata.type == 'fast5.tar.gz':
     tar -xzf '$input_fast5' -C ./data &&
-#elif '$input_fast5.metadata.type' == 'fast5.tar.bz2':
+#elif $input_fast5.metadata.type == 'fast5.tar.bz2':
     tar -xjf '$input_fast5' -C ./data &&
 #end if
     ]]></token>
@@ -39,11 +39,11 @@ mkdir -p './data' &&
         input
     -->
 
-    <xml name="b" token_argument="-b">
-        <param argument="@ARGUMENT@" type="integer" value="100" min="1" label="Set inference batch size"/>
+    <xml name="input_fast5">
+        <param name="input_fast5" type="data" format="fast5.tar,fast5.tar.gz,fast5.tar.bz2">
     </xml>
-    <xml name="model" token_argument="-m" token_label="Select model">
-        <param argument="@ARGUMENT@" type="select" label="@LABEL@">
+    <xml name="model" token_label="Select model">
+        <param name="Model" type="select" label="@LABEL@">
             <option value="dna_r9.4.1">dna_r9.4.1</option>
         </param>
     </xml>
