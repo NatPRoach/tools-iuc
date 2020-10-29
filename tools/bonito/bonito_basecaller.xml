@@ -19,7 +19,7 @@
 @INITIALIZE@
 
 ## run
-bonito basecaller
+bonito basecaller '$model'
 #if '$align.align_reads' == "Yes":
     --reference '$align_reads.reference'
     #if '$save_ctc':
@@ -38,7 +38,7 @@ bonito basecaller
 #if '$weights':
     --weights '$weights'
 #end if
-#if '$skip':
+#if '$skip' == "skip":
     --skip
 #end if
 #if '$output_format' == "fastq":
@@ -54,6 +54,7 @@ bonito basecaller
 #end if
     ]]></command>
     <inputs>
+        <expand macro="model"/>
         <conditional name="align">
             <param name="align_reads" type="select" label="Align reads to reference? (Output will be in SAM format)">
                 <option value="No" selected="True">No</option>
@@ -79,91 +80,41 @@ bonito basecaller
             <option value="fasta" selected="True">FASTA</option>
             <option value="fastq">FASTQ</option>
         </param>
-        <param name="reads_ids"/>
         <param name="device" type="select">
-            <option value="cuda">GPU</option>
+            <option value="cuda" selected="True">GPU</option>
             <option value="cpu">CPU</option>
         </param>
         <param name="weights" type="integer" value="0" min="0"/>
-        <param name="skip" />
+        <param name="reads_ids" type="data" type="txt,tsv" optional="True" label="File with read_ids (in the first column) to either skip or keep (as determined by the skip parameter)"/>
+        <param name="skip" type="select" label="What to do with the reads provided in reads_ids paramter">
+            <option value="keep" selected="True">Keep only the reads in reads_ids</option>
+            <option value="skip">Skip the reads in reads_ids</option>
+        </param>
     </inputs>
     <outputs>
         
     </outputs>
     <tests>
-        <!-- #1 default -->
-        <test expect_num_outputs="3">
-            <conditional name="pool">
-                <param name="pool_mode" value="Yes"/>
-                <param name="inputs" value="medaka_test.hdf,medaka_test.hdf"/>
-            </conditional>
-            <conditional name="reference_source">
-                <param name="reference_source_selector" value="history"/>
-                <param name="ref_file" value="ref.fasta"/>
-            </conditional>
-            <conditional name="output_annotated">
-                <param name="output_annotated_select" value="true"/>
-                <param name="in_bam" value="medaka_test.bam"/>
-            </conditional>
-            <param name="output_log_bool" value="true"/>
-            
-            <output name="out_result">
-                <assert_contents>
-                    <has_n_lines n="9"/>
-                    <has_line line="##fileformat=VCFv4.1" />
-                    <has_line line="##medaka_version=1.0.3" />
-                </assert_contents>
-            </output>
-            <output name="out_annotated">
-                <assert_contents>
-                    <has_n_lines n="16"/>
-                    <has_line line="##fileformat=VCFv4.1" />
-                    <has_line line="##medaka_version=1.0.3" />
-                    <has_line line="##annotateVCFVersion=0.2" />
-                </assert_contents>
-            </output>
-            <output name="out_log">
-                <assert_contents>
-                    <has_n_lines n="10" />
-                </assert_contents>
-            </output>
+        <!-- #1 fasta, gpu-->
+        <test expect_num_outputs="1">
         </test>
-        <!--No pooling-->
-        <test expect_num_outputs="3">
-            <conditional name="pool">
-                <param name="pool_mode" value="No"/>
-                <param name="input" value="medaka_test.hdf"/>
-            </conditional>
-            <conditional name="reference_source">
-                <param name="reference_source_selector" value="history"/>
-                <param name="ref_file" value="ref.fasta"/>
-            </conditional>
-            <conditional name="output_annotated">
-                <param name="output_annotated_select" value="true"/>
-                <param name="in_bam" value="medaka_test.bam"/>
-            </conditional>
-            <param name="output_log_bool" value="true"/>
-            
-            <output name="out_result">
-                <assert_contents>
-                    <has_n_lines n="9"/>
-                    <has_line line="##fileformat=VCFv4.1" />
-                    <has_line line="##medaka_version=1.0.3" />
-                </assert_contents>
-            </output>
-            <output name="out_annotated">
-                <assert_contents>
-                    <has_n_lines n="16"/>
-                    <has_line line="##fileformat=VCFv4.1" />
-                    <has_line line="##medaka_version=1.0.3" />
-                    <has_line line="##annotateVCFVersion=0.2" />
-                </assert_contents>
-            </output>
-            <output name="out_log">
-                <assert_contents>
-                    <has_n_lines n="8" />
-                </assert_contents>
-            </output>
+        <!-- #2 fastq, gpu-->
+        <test expect_num_outputs="1">
+        </test>
+        <!-- #3 sam, gpu-->
+        <test expect_num_outputs="1">
+        </test>
+        <!-- #3 sam, ctc output-->
+        <test expect_num_outputs="1">
+        </test>
+        <!-- #3 fasta, skip reads -->
+        <test expect_num_outputs="1">
+        </test>
+        <!-- #3 fasta, keep reads -->
+        <test expect_num_outputs="1">
+        </test>
+        <!-- #3 fasta, cpu-->
+        <test expect_num_outputs="1">
         </test>
     </tests>
     <help><![CDATA[
@@ -173,16 +124,18 @@ bonito basecaller
 
 @WID@
 
-The module *variant* decodes probabilities.
+The module *basecaller* converts fast5 data to basecalled FASTA/Q reads.
 
 **Input**
+- fast5 data
 
+**Optional Inputs**
 - reference sequence (FASTA)
-- (several) consensus files (H5/HDF)
+- reads ids file of reads to keep or skip (depending on set parameters)
 
 **Output**
 
-- decoded probabilities (VCF)
+- basecalled reads (FAST(A|Q) | SAM)
 
 **References**
 
