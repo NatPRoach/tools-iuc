@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<macros>
+    <token name="@TOOL_VERSION@">v5.0</token>
+    <token name="@PROFILE@">18.01</token>
+    <xml name="requirements">
+        <requirements>
+            <requirement type="package" version="@TOOL_VERSION@">talon</requirement>
+            <!-- <requirement type="package">samtools</requirement> -->
+            <yield />
+        </requirements>
+    </xml>
+    <!-- <xml name="version_command">
+        <version_command>talon version</version_command>
+    </xml>  --> <!-- No working version command for TALON-->
+    <xml name="citations">
+        <citations>
+            <citation type="bibtex">@online{medaka,
+              author = {Oxford Nanopore Technologies Ltd.},
+              title = {medaka},
+              year = 2020,
+              url = {https://github.com/nanoporetech/medaka},
+              urldate = {2020-05-06}
+            }</citation>
+        </citations>
+    </xml>
+
+    <!--
+        command
+    -->
+
+    <token name="@REF_FASTA@"><![CDATA[
+        #if $reference_source.reference_source_selector == 'history':
+            ln -f -s '$reference_source.ref_file' reference.fa &&
+        #else:
+            ln -f -s '$reference_source.ref_file.fields.path' reference.fa &&
+        #end if
+    ]]></token>
+
+    <!--
+        input
+    -->
+
+    <xml name="allowlist_params" token_name="allowlist" token_title="Allowlist parameters">
+        <section name="@NAME@" title="@TITLE@" expanded="true">
+            <param name="datasets" type="text" label="datasets to include in fitering" optional="true" help="Comma separated list of datasets to include in filtering, as a list of 0 indexed numbers of datasets. If empty all datasets are included.">
+                <validator type="regex" message="Must be either empty, an integer, or a comma separated list of integers">^([0-9]+(,[0-9]+)*)?$</validator>
+            </param>
+            <param argument="--maxFracA" name="max_frac_a" type="float" value="0.5" min="0" max="1" label="Maximum fraction of As to allow in the window located immediately after any read assigned to a novel transcript (helps to filter out internal priming artifacts)." help="Use 1 if you prefer to not filter out internal priming."/>
+            <param argument="--minCount" name="min_count" type="integer" value="5" label="Number of minimum occurrences required for a novel transcript PER dataset."/>
+            <param argument="--minDatasets" name="min_datasets" type="integer" label="Minimum number of datasets novel transcripts must be found in." help="Default is all datasets provided" optional="true"/>
+            <param argument="--allowGenomic" name="allow_genomic" type="boolean" checked="false" truevalue="--allowGenomic" falsevalue="" help="If this option is set, transcripts from the Genomic novelty category will be permitted in the output (provided they pass the thresholds). Default behavior is to filter out genomic transcripts since they are unlikely to be real novel isoforms."/>
+
+        </section>
+    </xml>
+    <xml name="reference">
+        <conditional name="reference_source">
+            <param name="reference_source_selector" type="select" label="Choose the source for the reference genome">
+                <option value="cached">Use a built-in genome</option>
+                <option value="history">Use a genome from history</option>
+            </param>
+            <when value="cached">
+                <param name="ref_file" type="select" label="Using reference genome" help="Select genome from the list">
+                    <options from_data_table="all_fasta">
+                        <filter type="sort_by" column="2"/>
+                        <validator type="no_options" message="No reference genomes are available"/>
+                    </options>
+                    <validator type="no_options" message="A built-in reference genome is not available for the build associated with the selected input file"/>
+                </param>
+            </when>
+            <when value="history">
+                <param name="ref_file" type="data" format="fasta,fastq" label="Use the following dataset as the reference sequence" help="You can upload a FASTA or FASTQ sequence to the history and use it as reference"/>
+            </when>
+        </conditional>
+    </xml>
+
+    <!--
+        Help
+    -->
+
+    <token name="@WID@"><![CDATA[
+*medaka* is a tool suite to create a consensus sequence from nanopore sequencing data.
+
+This task is performed using neural networks applied from a pileup of individual sequencing reads against a draft assembly. It outperforms graph-based methods operating on basecalled data, and can be competitive with state-of-the-art signal-based methods, whilst being much faster.
+    ]]></token>
+    <token name="@REFERENCES@"><![CDATA[
+More information are available in the `manual <https://nanoporetech.github.io/medaka/index.html>`_ and `github <https://github.com/nanoporetech/medaka>`_.
+    ]]></token>
+</macros>

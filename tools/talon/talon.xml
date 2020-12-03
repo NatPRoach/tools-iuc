@@ -1,0 +1,323 @@
+<?xml version="1.0"?>
+<tool id="talon_pipeline" name="Talon pipeline" version="@TOOL_VERSION@+galaxy0" profile="@PROFILE@">
+    <description>Long-read transcriptome assembly workflow TALON</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+
+    <expand macro="requirements"/>
+    <!-- <expand macro="version_command"/> --> <!--No working version command for TALON-->
+
+    <command detect_errors="exit_code"><![CDATA[
+## initialize
+@REF_FASTA@
+
+mkdir talon_db/
+&& talon_initialize_database 
+  --f '$database.in_gtf'
+  --g '$database.reference_name'
+  --a '$database.annotation_name'
+  --l '$database.min_transcript_length'
+  --idprefix '$database.id_prefix'
+  --5p '$database.max_five_prime'
+  --3p '$database.max_three_prime'
+  --o talon_db/talon_db
+
+&& touch config_file.txt 
+
+&& mkdir labeled_reads
+#for $i, $input_read in enumerate($input_reads):
+    && ln -s $input_read.input_sam_alignment input_${i}.sam
+    && talon_label_reads
+    --f='input_${i}.sam'
+    --g='reference.fa'
+    --t=\${GALAXY_SLOTS:-4}
+    --ar='$flagging.fraca_range_size'
+    --o='labeled_reads/input_${i}'
+## Generate config file line for each input
+    #set $config_line = "%s,%s,%s,labeled_reads/input_%d_labeled.sam" % ( $input_read["input_names"], $input_read["input_descriptions"], $input_read["input_platform"], $i)
+    && echo '$config_line' >> config_file.txt
+#end for
+&& ls labeled_reads/
+&& echo ""
+&& cat config_file.txt
+&& echo ""
+
+&& mkdir talon_out
+&& talon
+    --f config_file.txt
+    --db talon_db/talon_db.db
+    --build '$database.reference_name'
+    --threads 1
+    --cov '$talon.min_coverage'
+    --identity '$talon.min_identity'
+    --o talon_out/talon
+
+## Generate allowlist of reads to be used
+#if $filtering.allowlist.allowlist_select != "dont_filter":
+    && mkdir filtering/
+#end if
+#if $filtering.allowlist.allowlist_select == "both_same":
+    #if $filtering.allowlist.both.datasets != "":
+        && touch filtering/both_datasets.txt
+        #for $i in $filtering.allowlist.both.datasets.split(','):
+            #set name = $input_reads[int($i)]["input_names"]
+            && echo '$name' >> filtering/both_datasets.txt
+        #end for
+        && cat filtering/both_datasets.txt
+    #end if
+    && talon_filter_transcripts
+        --db=talon_db/talon_db.db
+        --annot='$database.annotation_name'
+        #if $filtering.allowlist.both.datasets != "":
+            --datasets=filtering/both_datasets.txt
+        #end if
+        --maxFracA='$filtering.allowlist.both.max_frac_a'
+        --minCount='$filtering.allowlist.both.min_count'
+        #if $filtering.allowlist.both.min_datasets:
+            --minDatasets='$filtering.allowlist.both.min_datasets'
+        #end if
+        '$filtering.allowlist.both.allow_genomic'
+        --o both_allowlist.txt
+    && ln -s both_allowlist.txt abundance_allowlist.txt
+    && ln -s both_allowlist.txt gtf_allowlist.txt
+    && cat both_allowlist.txt
+#elif $filtering.allowlist.allowlist_select == "both_different" or $filtering.allowlist.allowlist_select == "abundance_only":
+    #if $filtering.allowlist.abundance.datasets != "":
+        && touch filtering/abundance_datasets.txt
+        #for $i in $filtering.allowlist.abundance.datasets.split(','):
+            #set name = $input_reads[int($i)]["input_names"]
+            && echo '$name' >> filtering/abundance_datasets.txt
+        #end for
+        && cat filtering/abundance_datasets.txt
+    #end if
+    && talon_filter_transcripts
+        --db=talon_db/talon_db.db
+        --annot='$database.annotation_name'
+        #if $filtering.allowlist.abundance.datasets != "":
+            --datasets=filtering/abundance_datasets.txt
+        #end if
+        --maxFracA='$filtering.allowlist.abundance.max_frac_a'
+        --minCount='$filtering.allowlist.abundance.min_count'
+        #if $filtering.allowlist.abundance.min_datasets:
+            --minDatasets='$filtering.allowlist.abundance.min_datasets'
+        #end if
+        '$filtering.allowlist.abundance.allow_genomic'
+        --o abundance_allowlist.txt
+    && cat abundance_allowlist.txt
+#elif $filtering.allowlist.allowlist_select == "both_different" or $filtering.allowlist.allowlist_select == "gtf_only":
+    #if $filtering.allowlist.gtf.datasets != "":
+        && touch filtering/gtf_datasets.txt
+        #for $i in $filtering.allowlist.gtf.datasets.split(','):
+            #set name = $input_reads[int($i)]["input_names"]
+            && echo '$name' >> filtering/gtf_datasets.txt
+        #end for
+        && cat filtering/gtf_datasets.txt
+    #end if
+    && talon_filter_transcripts
+        --db=talon_db/talon_db.db
+        --annot='$database.annotation_name'
+        #if $filtering.allowlist.gtf.datasets != "":
+            --datasets=filtering/gtf_datasets.txt
+        #end if
+        --maxFracA='$filtering.allowlist.gtf.max_frac_a'
+        --minCount='$filtering.allowlist.gtf.min_count'
+        #if $filtering.allowlist.gtf.min_datasets:
+            --minDatasets='$filtering.allowlist.gtf.min_datasets'
+        #end if
+        '$filtering.allowlist.gtf.allow_genomic'
+        --o gtf_allowlist.txt
+    && cat gtf_allowlist.txt
+#end if 
+
+## Abundance information
+#if $abundance.run_abundance.run_abundance_select == "true":
+    && mkdir abundance/
+    #if $abundance.run_abundance.datasets:
+        && touch abundance/abundance_datasets.txt
+        #for $i in $abundance.run_abundance.datasets.split(','):
+            #set name = $input_reads[int($i)]["input_names"]
+            && echo '$name' >> abundance/abundance_datasets.txt
+        #end for
+        && cat abundance/abundance_datasets.txt
+    #end if
+    && talon_abundance
+        --db=talon_db/talon_db.db
+        --annot='$database.annotation_name'
+        #if $filtering.allowlist.allowlist_select == "both_same" or $filtering.allowlist.allowlist_select == "both_different" or $filtering.allowlist.allowlist_select == "abundance_only":
+            --whitelist=abundance_allowlist.txt
+        #end if
+        --build '$database.reference_name'
+        #if $abundance.run_abundance.datasets:
+            --datasets=abundance/abundance_datasets.txt
+        #end if
+        --o abundance/out
+    && ls abundance/
+#end if
+
+## Generate GTF file of new annotation
+#if $annotation.run_gtf.run_gtf_select == "true"
+    && mkdir annotation/
+    #if $annotation.run_gtf.datasets:
+        && touch annotation/annotation_datasets.txt
+        #for $i in $annotation.run_gtf.datasets.split(','):
+            #set name = $input_reads[int($i)]["input_names"]
+            && echo '$name' >> annotation/annotation_datasets.txt
+        #end for
+        && cat annotation/annotation_datasets.txt
+    #end if
+    && talon_create_GTF
+        --db=talon_db/talon_db.db
+        --annot='$database.annotation_name'
+        --build '$database.reference_name'
+        #if $filtering.allowlist.allowlist_select == "both_same" or $filtering.allowlist.allowlist_select == "both_different" or $filtering.allowlist.allowlist_select == "gtf_only":
+            --whitelist=gtf_allowlist.txt
+        #end if
+        #if $annotation.run_gtf.datasets:
+            --datasets=annotation/annotation_datasets.txt
+        #end if
+        '$annotation.run_gtf.observed'
+        --o annotation/out
+    && ls annotation/
+#end if
+    ]]></command>
+    <inputs>
+        <expand macro="reference"/>
+        <repeat name="input_reads" min="1" title="Input Reads" help="SAM file(s) to be analyzed">
+            <param name="input_sam_alignment" type="data" format="sam"/>
+            <param name="input_names" type="text">
+                <sanitizer invalid_char="_">
+                    <valid initial="default">
+                        <remove value=", "/> <!--Need to remove spaces from the name in case they want to only report some datasets later-->
+                    </valid>
+                </sanitizer>
+            </param>
+            <param name="input_descriptions" type="text">
+                <sanitizer invalid_char="">
+                    <valid initial="default">
+                        <remove value=","/>
+                    </valid>
+                </sanitizer>
+            </param>
+            <param name="input_platform" type="text">
+                <sanitizer invalid_char="">
+                    <valid initial="default">
+                        <remove value=","/>
+                    </valid>
+                </sanitizer>
+            </param>
+        </repeat>
+        <section name="outputs" title="Output Options" expanded="true">
+            <param name="qc_log_output_bool" type="boolean" checked="false" label="Output QC log from TALON run?"/>
+            <param name="read_annot_output_bool" type="boolean" checked="false" label="Output read annotation tabular file from TALON run?"/>
+        </section>
+        <section name="database" title="Initialize Database Options" expanded="true">
+            <param name="in_gtf" argument="--f" label="The GTF file with which to initialize the database" type="data" format="gtf"/>
+            <param name="reference_name" argument="--g" label="The name of the reference genome build that the annotation describes" type="text"/>
+            <param name="annotation_name" argument="--a" label="The name of the annotation" help="For metadata purposes" type="text"/>
+            <param name="min_transcript_length" argument="--l" label="Minimum required transcript length" type="integer" value="0" min="0"/>
+            <param name="id_prefix" argument="--idprefix" label="Prefix for naming novel discoveries in TALON run" type="text" value="TALON"/>
+            <param name="max_five_prime" argument="--5p" label="Maximum allowable distance (bp) at the 5' end during annotation" type="integer" value="500" min="0"/>
+            <param name="max_three_prime" argument="--3p" label="Maximum allowable distance (bp) at the 3' end during annotation" type="integer" value="300" min="0"/>
+        </section>
+        <section name="talon" title="Options for TALON run" expanded="true">
+            <param name="min_coverage" argument="--cov" type="float" value="0.9"/>
+            <param name="min_identity" argument="--identity" type="float" value="0.8"/>
+        </section>
+        <section name="flagging" title="Read Flagging Options" expanded="true">
+            <param name="fraca_range_size" argument="--ar" label="Size of post-transcript interval to compute fraction As on." type="integer" value="20"/>
+        </section>
+        <section name="filtering" title="Filtering Options for Abundance Output and GTF Output" expanded="true">
+            <conditional name="allowlist">
+                <param name="allowlist_select" type="select">
+                    <option value="dont_filter" selected="true">Do not filter abundance and GTF reporting</option>
+                    <option value="both_same">Generate one filter list, filter both abundance and GTF reporting</option>
+                    <option value="both_different">Generate two distinct filter lists, one for abundance reporting, one for GTF reporting</option>
+                    <option value="abundance_only">Generate one filter list, filter abundance reporting</option>
+                    <option value="gtf_only">Generate one filter list, filter GTF reporting</option>
+                </param>
+                <when value="both_same">
+                    <expand macro="allowlist_params" name="both" title="Filtering parameters for abundance and GTF reporting"/>
+                </when>
+                <when value="both_different">
+                    <expand macro="allowlist_params" name="abundance" title="Abundance reporting filtering parameters"/>
+                    <expand macro="allowlist_params" name="gtf" title="GTF reporting filtering parameters"/>
+                </when>
+                <when value="abundance_only">
+                    <expand macro="allowlist_params" name="abundance" title="Abundance reporting filtering parameters"/>
+                </when>
+                <when value="gtf_only">
+                    <expand macro="allowlist_params" name="gtf" title="GTF reporting filtering parameters"/>
+                </when>
+                <when value="dont_filter">
+                </when>
+            </conditional>
+        </section>
+        <section name="abundance" title="Abundance Quantification Options" expanded="true">
+            <conditional name="run_abundance">
+                <param name="run_abundance_select" type="select">
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                </param>
+                <when value="true">
+                    <param name="datasets" type="text" label="datasets to include in abundance output" optional="true" help="Comma separated list of datasets to include in abundance output, as a list of 0 indexed numbers of datasets. If empty all datasets are included.">
+                        <validator type="regex" message="Must be either empty, an integer, or a comma separated list of integers">^([0-9]+(,[0-9]+)*)?$</validator>
+                    </param>
+                </when>
+                <when value="false"/>
+            </conditional>
+        </section>
+        <section name="annotation" title="GTF Annotation Options" expanded="true">
+            <conditional name="run_gtf">
+                <param name="run_gtf_select" type="select">
+                    <option value="true">True</option>
+                    <option value="false">False</option>
+                </param>
+                <when value="true">
+                    <param name="datasets" type="text" label="datasets to include in GTF output" optional="true" help="Comma separated list of datasets to include in GTF output, as a list of 0 indexed numbers of datasets. If empty all datasets are included.">
+                        <validator type="regex" message="Must be either empty, an integer, or a comma separated list of integers">^([0-9]+(,[0-9]+)*)?$</validator>
+                    </param>
+                    <param argument="--observed" type="boolean" label="If this option is set, the GTF file will only include transcripts that were observed in at least one dataset" help="(redundant if dataset list is provided)" checked="false" truevalue="--observed" falsevalue=""/>
+                </when>
+                <when value="false"/>
+            </conditional>
+        </section> 
+    </inputs>
+    <outputs>
+        <!-- <data name="out_config_file" format="txt" from_work_dir="config_file.txt"/> -->
+        <data name="out_gtf" format="gtf" from_work_dir="annotation/out_talon.gtf">
+            <filter>annotation["run_gtf"]["run_gtf_select"] == "true"</filter>
+        </data>
+        <data name="out_abundance_full" format="tsv" from_work_dir="abundance/out_talon_abundance.tsv">
+            <filter>abundance["run_abundance"]["run_abundance_select"] == "true" and abundance["run_abundance"]["datasets"] == ""</filter>
+        </data>
+        <data name="out_abundance_filtered" format="tsv" from_work_dir="abundance/out_talon_abundance_filtered.tsv">
+            <filter>abundance["run_abundance"]["run_abundance_select"] == "true" and abundance["run_abundance"]["datasets"] != ""</filter>
+        </data>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+.. class:: infomark
+
+**What it does**
+
+@WID@
+
+TALON builds transcriptomes using long read RNA-seq and an existing transcriptome annotation.
+
+**Input**
+- input Long-read RNA-seq file(s) (SAM)
+- reference sequence (FASTA)
+- reference transcriptome annotation (GTF)
+
+**Output**
+
+
+
+**References**
+
+@REFERENCES@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>
