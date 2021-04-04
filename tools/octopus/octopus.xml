@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+<tool id="octopus" name="Octopus Variant Calling" version="@TOOL_VERSION@+galaxy0" profile="@PROFILE@">
+    <description>Mapping based variant calling</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements">
+    </expand>
+
+    <expand macro="version_command"/>
+
+    <command detect_errors="exit_code"><![CDATA[
+@REF_FASTA@
+
+octopus
+    --debug
+    '$speed'
+    --output '${variants_out}'
+    --threads ${GALAXY_SLOTS:-4}
+    --reference reference.fa
+    --reads
+#for $read in $reads:
+    '${read}'
+#end for
+    '${one_based_indexing}'
+    --regions
+#for $region in $regions:
+    '${region.region}'
+#end for
+    --regions-file '${regions_file}'
+    --skip-regions
+#for $region in $skip_regions:
+    '${region.skip_region}'
+#end for
+    --skip-regions-file '${skip_regions_file}'
+    --samples
+#for $sample in $samples:
+    '${sample.sample}'
+#end for
+    --samples-file '${samples_file}'
+    '${ignore_unmapped_contigs}'
+    --pedigree '${pedigree}'
+## Little unclear on this. Is it a text param or something else. Come back to it
+##    --contig-output-order
+    '${sites_only}'
+    '${legacy}'
+    --regenotype '${regenotype}'
+    --bamout '${bam_out}'
+    --split-bam-out '${split_bamout}'
+    --data-profile '${profile_out}'
+
+&& cat octopus_debug.log
+    ]]></command>
+    <inputs>
+        <section>
+        </section>
+    </inputs>
+    <outputs>
+    </outputs>
+    <tests>
+    </tests>
+    <help><![CDATA[
+.. class:: infomark
+
+**What it does**
+
+@WID@
+
+**Input**
+
+- reference sequence (FASTA)
+
+**Output**
+
+- (VCF)
+
+**References**
+
+@REFERENCES@
+    ]]></help>
+    <expand macro="citations"/>
+</tool>
