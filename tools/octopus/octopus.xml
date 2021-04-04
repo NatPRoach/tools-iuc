@@ -13,10 +13,10 @@
 @REF_FASTA@
 
 octopus
-    --debug
-    '$speed'
+    '${log_level}'
+    '${speed}'
     --output '${variants_out}'
-    --threads ${GALAXY_SLOTS:-4}
+    --threads \${GALAXY_SLOTS:-4}
     --reference reference.fa
     --reads
 #for $read in $reads:
@@ -49,10 +49,35 @@ octopus
     --split-bam-out '${split_bamout}'
     --data-profile '${profile_out}'
 
-&& cat octopus_debug.log
+&& cat octopus_debug.log 1>&2
     ]]></command>
     <inputs>
-        <section>
+        <section title="General" expanded="false">
+            <param name="log_level" type="select" label="" help="">
+                <option value="--debug" selected="true">Write verbose debug info to stderr</option>
+                <option value="--trace">Write very verbose debug info to stderr</option>
+            </param>
+            <param name="speed" type="select" label="" help="Fast is equivalent to '-a off -l minimal -x 50'">
+                <option value="" selected="true">Default accuracy to speed parameters</option>
+                <option value="--fast">Fast - Turn off some features to improve runtime, at the cost of decreased calling accuracy.</option>
+                <option value="--very-fast">Very fast - The same as fast but also disables inactive flank scoring.</option>
+            </param>
+        </section>
+        <section title="Inputs and Outputs" expanded="true">
+        </section>
+        <section title="Read transformations">
+        </section>
+        <section title="Read filtering">
+        </section>
+        <section title="Candidate variant generation">
+        </section>
+        <section title="Haplotype generation">
+        </section>
+        <section title="Calling">
+        </section>
+        <section title="Phasing">
+        </section>
+        <section title="Variant filtering">
         </section>
     </inputs>
     <outputs>
