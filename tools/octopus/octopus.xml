@@ -63,17 +63,94 @@ octopus
                 <option value="--very-fast">Very fast - The same as fast but also disables inactive flank scoring.</option>
             </param>
         </section>
-        <section title="Inputs and Outputs" expanded="true">
+        <section name="io" title="Inputs and Outputs" expanded="true">
+            <param argument="--reference" />
+            <param argument="--reads" />
+            <param argument="--one-based-indexing" />
+            <param argument="--regions" />
+            <param argument="--regions-file" />
+            <param argument="--skip-regions" />
+            <param argument="--skip-regions-file" />
+            <param argument="--samples" />
+            <param argument="--samples-file" />
+            <param argument="--ignore-unmapped-contigs" />
+            <param argument="--pedigree" />
+            <param argument="--contig-output-order" />
+            <param argument="--sites-only" />
+            <param argument="--regenotype" />
+            <param argument="--legacy" />
+            <param argument="--bamout" />
+            <param argument="--full-bamout"/>
+            <param argument="--data-profile"/>
         </section>
-        <section title="Read transformations">
+        <section name="transform" title="Read transformations" expanded="false">
+            <param argument="--read-transforms"/>
+            <param argument="--mask-low-quality-tails"/>
+            <param argument="--mask-tails"/>
+            <param argument="--soft-clip-masking"/>
+            <param argument="--soft-clip-mask-threshold"/>
+            <param argument="--mask-soft-clipped-boundary-bases"/>
+            <param argument="--adapter-masking"/>
+            <param argument="--overlap-masking"/>
+            <param argument="--mask-inverted-soft-clipping"/>
+            <param argument="--mask-3prime-shifted-soft-clipped-heads"/>
         </section>
-        <section title="Read filtering">
+        <section name="" title="Read filtering" expanded="false">
+            <param argument="--read-filtering" />
+            <param argument="--consider-unmapped-reads" />
+            <param argument="--min-mapping-quality" />
+            <param argument="--good-base-quality" />
+            <param argument="--min-good-base-fraction" />
+            <param argument="--min-good-bases" />
+            <param argument="--allow-qc-fails" />
+            <param argument="--min-read-length" />
+            <param argument="--max-read-legnth" />
+            <param argument="--allow-marked-duplicates" />
+            <param argument="--allow-octopus-duplicates" />
+            <param argument="--allow-secondary-alignments" />
+            <param argument="--allow-supplementary-alignments"/>
+            <param argument="--no-reads-with-unmapped-segments"/>
+            <param argument="--no-reads-with-distant-segments"/>
+            <param argument="--no-adapter-contaminated-reads"/>
+            <param argument="--disable-downsampling"/>
+            <param argument="--downsample-above"/>
+            <param argument="--downsample-target"/>
         </section>
-        <section title="Candidate variant generation">
+        <section title="Candidate variant generation" expanded="false">
+            <param argument="--raw-cigar-candidate-generator"/>
+            <param argument="--repeat-candidate-generator"/>
+            <param argument="--assembly-candidate-generator"/>
+            <param argument="--source-candidates"/>
+            <param argument="--source-candidates-file"/>
+            <param argument="--min-source-quality"/>
+            <param argument="--use-filtered-source-candidates"/>
+            <param argument="--min-base-quality"/>
+            <param argument="--min-supporting-reads"/>
+            <param argument="--max-variant-size"/>
+            <param argument="--kmer-sizes"/>
+            <param argument="--num-fallback-kmers"/>
+            <param argument="--fallback-kmer-gap"/>
+            <param argument="--max-region-to-assemble"/>
+            <param argument="--max-assemble-region-overlap"/>
+            <param argument="--assemble-all"/>
+            <param argument="--assembler-mask-base-quality"/>
+            <param argument="--min-kmer-prune"/>
+            <param argument="--max-bubbles"/>
+            <param argument="--min-bubble-score"/>
         </section>
-        <section title="Haplotype generation">
+        <section title="Haplotype generation" expanded="false">
+            <param argument="--max-haplotypes"/>
+            <param argument="--haplotype-holdout-threshold"/>
+            <param argument="--haplotype-overflow"/>
+            <param argument="--max-holdout-depth"/>
+            <param argument="--extension-level"/>
+            <param argument="--haplotype-extension-threshold"/>
+            <param argument="--dedup-haplotypes-with-prior-model"/>
+            <param argument="--protect-reference-haplotype"/>
         </section>
-        <section title="Calling">
+        <section title="Calling" expanded="true">
+            <param argument="--caller"/>
+            <param argument="--organism-ploidy"/>
         </section>
         <section title="Phasing">
         </section>
