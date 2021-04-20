@@ -151,10 +151,40 @@ octopus
         <section title="Calling" expanded="true">
             <param argument="--caller"/>
             <param argument="--organism-ploidy"/>
+            <param argument="--contig-ploidies"/> <!-- TODO - make repeat? -->
+            <param argument="--contig-ploidies-file"/>
+            <param argument="--min-variant-posterior"/>
+            <param argument="--refcall"/>
+            <param argument="--min-refcall-posterior"/>
+            <param argument="--snp-heterozygosity"/>
+            <param argument="--snp-heterozygosity-stdev"/>
+            <param argument="--indel-heterozygosity"/>
+            <param argument="--use-uniform-genotype-priors"/>
+            <param argument="--max-genotypes"/>
+            <param argument="--max-joint-genotypes"/>
+            <param argument="--use-independent-genotype-priors"/>
+            <param argument="--model-posterior"/>
+            <param argument="--inactive-flank-scoring"/>
+            <param argument="--model-mapping-quality"/>
+            <param argument="--sequence-error-model"/>
+            <param argument="--max-vb-seeds"/>
         </section>
         <section title="Phasing">
+            <param argument="--phasing-level"/>
+            <param argument="--min-phase-score"/>
         </section>
         <section title="Variant filtering">
+            <param argument="--call-filtering"/>
+            <param argument="--filter-expression"/>
+            <param argument="--somatic-filter-expression"/>
+            <param argument="--denovo-filter-expression"/>
+            <param argument="--refcall-filter-expression"/>
+            <param argument="--use-calling-reads-for-filtering"/>
+            <param argument="--keep-unfiltered-calls"/>
+            <param argument="--training-annotations"/>
+            <param argument="--filter-vcf"/> <!-- TODO - make this a separate tool?-->
+            <param argument="--forest-file" optional="true"/>
+            <param argument="--somatic-forest-file" optional="true"/>
         </section>
     </inputs>
     <outputs>
