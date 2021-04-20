@@ -64,27 +64,31 @@ octopus
             </param>
         </section>
         <section name="io" title="Inputs and Outputs" expanded="true">
-            <param argument="--reference" />
-            <param argument="--reads" />
-            <param argument="--one-based-indexing" />
-            <param argument="--regions" />
-            <param argument="--regions-file" />
-            <param argument="--skip-regions" />
-            <param argument="--skip-regions-file" />
-            <param argument="--samples" />
-            <param argument="--samples-file" />
-            <param argument="--ignore-unmapped-contigs" />
-            <param argument="--pedigree" />
-            <param argument="--contig-output-order" />
-            <param argument="--sites-only" />
-            <param argument="--regenotype" />
-            <param argument="--legacy" />
-            <param argument="--bamout" />
-            <param argument="--full-bamout"/>
-            <param argument="--data-profile"/>
+            <expand macro="reference"/>
+            <param argument="--reads" type="data" multiple="true" format="bam,cram" label="BAM/CRAM files to be analyzed" help="Multiple can be specified"/>
+            <section name="regions" title="Regions" expanded="true">
+                <param argument="--one-based-indexing" type="boolean" truevalue="--one-based-indexing" falsevalue="" checked="false" label="Input regions are given using one based indexing rather than zero"/>
+                <param argument="--regions" type="text" label="Region (chrom:begin-end) to be analyzed"/> <!-- TODO - make repeat? -->
+                <param argument="--regions-file" type="data" format="text,tabular" optional="true" label="File containing a list of regions to be analyzed" help="regions should be in format chrom:start-end with one region per line"/>
+                <param argument="--skip-regions" type="text" label="Region (chrom:begin-end) to be skip" /> <!-- TODO - make repeat -->
+                <param argument="--skip-regions-file" type="data" format="text,tabular" optional="true" label="File containing a list of regions to skip" help="regions should be in format chrom:start-end with one region per line"/>
+            </section>
+            <param argument="--samples" type="text" label="Sample names to analyse"/> <!-- TODO - make repeat -->
+            <param argument="--samples-file" type="data" format="text,tabular" optional="true" label="File of sample names to analyse" help="File should have one sample name per line. Must be a subset of the samples that appear in the read files."/>
+            <param argument="--ignore-unmapped-contigs" type="boolean" truevalue="--ignore-unmapped-contigs" falsevalue="" checked="false" label="Ignore any contigs that are not present in the read files?"/>
+            <param argument="--pedigree" type="data" type="ped" optional="true" label="PED file containing sample pedigree"/> <!-- TODO - check that this is a valid filetype, make txt if not -->
+            <param argument="--contig-output-order" type="select" label="The order contigs should be written in the output">
+                <option value="asInReferenceIndex">asInReferenceIndex</option> <!-- TODO - see if there are other options-->
+            </param>
+            <param argument="--sites-only" type="boolean" truevalue="--sites-only" falsevalue="" checked="false" label="Only report call sites" help="i.e. report sites without sample genotype information"/>
+            <param argument="--regenotype" type="data" type="vcf" optional="true" label="VCF file specifying calls to regenotype, only sites in this file will appear in the final output"/>
+            <param argument="--legacy" type="boolean" truevalue="--legacy" falsevalue="" checked="false" label="Output a legacy version of final callset in addition to the native version?"/>
+            <param argument="--bamout" type="boolean" truevalue="--bamout " falsevalue="" checked="false" label="Output realigned BAM files?"/>
+            <param argument="--split-bamout" type="boolean" truevalue="--split-bamout" falsevalue="" checked="false" label="Output split realigned BAM files?"/>
+            <param argument="--data-profile" type="boolean" truevalue="--data-profile" falsevalue="" checked="false" label="Output a profile of polymorphisms and errors found in the data?"/>
         </section>
         <section name="transform" title="Read transformations" expanded="false">
-            <param argument="--read-transforms"/>
+            <param argument="--read-transforms"/> <!-- TODO - something clever with conditional block here + macros -->
             <param argument="--mask-low-quality-tails"/>
             <param argument="--mask-tails"/>
             <param argument="--soft-clip-masking"/>
@@ -96,7 +100,7 @@ octopus
             <param argument="--mask-3prime-shifted-soft-clipped-heads"/>
         </section>
         <section name="" title="Read filtering" expanded="false">
-            <param argument="--read-filtering" />
+            <param argument="--read-filtering" /> <!-- TODO - something clever with conditional block here + macros -->
             <param argument="--consider-unmapped-reads" />
             <param argument="--min-mapping-quality" />
             <param argument="--good-base-quality" />
@@ -117,74 +121,91 @@ octopus
             <param argument="--downsample-target"/>
         </section>
         <section title="Candidate variant generation" expanded="false">
-            <param argument="--raw-cigar-candidate-generator"/>
-            <param argument="--repeat-candidate-generator"/>
-            <param argument="--assembly-candidate-generator"/>
-            <param argument="--source-candidates"/>
-            <param argument="--source-candidates-file"/>
-            <param argument="--min-source-quality"/>
-            <param argument="--use-filtered-source-candidates"/>
-            <param argument="--min-base-quality"/>
-            <param argument="--min-supporting-reads"/>
-            <param argument="--max-variant-size"/>
-            <param argument="--kmer-sizes"/>
-            <param argument="--num-fallback-kmers"/>
-            <param argument="--fallback-kmer-gap"/>
-            <param argument="--max-region-to-assemble"/>
-            <param argument="--max-assemble-region-overlap"/>
-            <param argument="--assemble-all"/>
-            <param argument="--assembler-mask-base-quality"/>
-            <param argument="--min-kmer-prune"/>
-            <param argument="--max-bubbles"/>
-            <param argument="--min-bubble-score"/>
+            <param argument="--raw-cigar-candidate-generator" type="boolean" truevalue="--raw-cigar-candidate-generation 1" falsevalue="--raw-cigar-candidate-generation 0" checked="true" label="Enable candidate generation from raw read alignments (CIGAR strings)?"/>
+            <param argument="--repeat-candidate-generator" type="boolean" truevalue="--repeat-candidate-generator 1" falsevalue="--repeat-candidate-generator 0" checked="true" label="Enable candidate generation from adjusted read alignments (CIGAR strings) around tandem repeats?"/>
+            <param argument="--assembly-candidate-generator" type="boolean" truevalue="--assembly-candidate-generator 1" falsevalue="--assembly-candidate-generator 0" checked="true" label="Enable candidate generation using local re-assembly?"/>
+            <param argument="--source-candidates" type="data" format="vcf" multiple="true" label="Variant file containing known variants" help="These variants will automatically become candidates"/>
+            <param argument="--min-source-quality" type="integer" optional="true" label="Only variants with quality above this value are considered for candidate generation"/>
+            <param argument="--extract-filtered-source-candidates" type="boolean" truevalue="--extract-filtered-source-candidate 1" falsevalue="--extract-filtered-source-candidate 0" checked="false" label="Extract variants from source VCF records that have been filtered?"/>
+            <param argument="--min-base-quality" type="integer" value="20" label="Only bases with quality above this value are considered for candidate generation"/>
+            <param argument="--min-supporting-reads" type="integer" optional="true" label="Minimum number of reads that must support a variant if it is to be considered a candidate" help="By default octopus will automatically determine this value"/>
+            <param argument="--max-variant-size" type="integer" value="2000" label="Maximum candidate variant size to consider" help="(in region space)"/>
+            <param argument="--kmer-sizes" type="text" value="10 15 20" label="Kmer sizes to use for local assembly"/> <!-- TODO - make a repeat? -->
+            <param argument="--num-fallback-kmers" type="integer" value="10" label="How many local assembly fallback kmer sizes to use if the default sizes fail"/>
+            <param argument="--fallback-kmer-gap" type="integer" value="10" label="The gap size used to generate local assembly fallback kmers"/>
+            <param argument="--max-region-to-assemble" type="integer" value="400" label="The maximum region size that can be used for local assembly"/>
+            <param argument="--max-assemble-region-overlap" type="integer" value="200" label="The maximum number of bases allowed to overlap assembly regions"/>            <param argument="--assemble-all"/>
+            <param argument="--assemble-all" type="boolean" truevalue="--assemble-all" falsevalue="" checked="false" label="Forces all regions to be assembled"/>
+            <param argument="--assembler-mask-base-quality" type="integer" value="10" label="Aligned bases with quality less than this will be converted to reference before being inserted into the De Bruijn graph"/>
+            <param argument="--min-kmer-prune" type="integer" value="2" label="Minimum number of read observations to keep a kmer in the assembly graph before bubble extraction"/>
+            <param argument="--max-bubbles" type="integer" value="30" label="Maximum number of bubbles to extract from the assembly graph"/>
+            <param argument="--min-bubble-score" type="integer" value="2" label="Minimum bubble score that will be extracted from the assembly graph"/>
         </section>
         <section title="Haplotype generation" expanded="false">
-            <param argument="--max-haplotypes"/>
-            <param argument="--haplotype-holdout-threshold"/>
-            <param argument="--haplotype-overflow"/>
-            <param argument="--max-holdout-depth"/>
-            <param argument="--extension-level"/>
-            <param argument="--haplotype-extension-threshold"/>
-            <param argument="--dedup-haplotypes-with-prior-model"/>
-            <param argument="--protect-reference-haplotype"/>
+            <param argument="--max-haplotypes" type="integer" value="200" label="Maximum number of candidate haplotypes the caller may consider" help="If a region contains more candidate haplotypes that this then filtering is applied"/>
+            <param argument="--haplotype-holdout-threshold" type="integer" value="2500" label="Forces the haplotype generator to temporarily hold out some alleles if the numebr of haplotypes in a region exceeds this threshold"/>
+            <param argument="--haplotype-overflow" type="integer" value="200000" label="Regions with more haplotypes than this will be skipped"/>
+            <param argument="--max-holdout-depth" type="integer" value="20" label="Maximum number of holdout attempts the haplotype generator can make before the region is skipped"/>
+            <param argument="--extension-level" type="select">
+                <option value="normal" selected="true">Normal</option>
+                <option value="conservative">Conservative</option>
+                <option value="optimistic">Optimistic</option>
+                <option value="aggressive">Aggressive</option>
+            </param>
+            <param argument="--haplotype-extension-threshold" type="float" value="100.0" label="Haplotypes with posterior probability less than this can be filtered before extension"/>
+            <param argument="--dedup-haplotypes-with-prior-model" type="boolean" truevalue="--dedup-haplotypes-with-prior-model 1" falsevalue="--dedup-haplotypes-with-prior-model 0" checked="true" label="Remove duplicate haplotypes using mutation prior model?"/>
+            <param argument="--protect-reference-haplotype" type="boolean" truevalue="--protect-reference-haplotype 1" falsevalue="--protect-reference-haplotype 0" checked="true" label="Protect the reference haplotype from filtering?"/>
         </section>
         <section title="Calling" expanded="true">
-            <param argument="--caller"/>
-            <param argument="--organism-ploidy"/>
-            <param argument="--contig-ploidies"/> <!-- TODO - make repeat? -->
-            <param argument="--contig-ploidies-file"/>
-            <param argument="--min-variant-posterior"/>
-            <param argument="--refcall"/>
-            <param argument="--min-refcall-posterior"/>
-            <param argument="--snp-heterozygosity"/>
-            <param argument="--snp-heterozygosity-stdev"/>
-            <param argument="--indel-heterozygosity"/>
-            <param argument="--use-uniform-genotype-priors"/>
-            <param argument="--max-genotypes"/>
-            <param argument="--max-joint-genotypes"/>
-            <param argument="--use-independent-genotype-priors"/>
-            <param argument="--model-posterior"/>
-            <param argument="--inactive-flank-scoring"/>
-            <param argument="--model-mapping-quality"/>
-            <param argument="--sequence-error-model"/>
-            <param argument="--max-vb-seeds"/>
+            <param argument="--caller" type="select" label="Which of the octopus callers to use">
+                <option value="population">Population - </option>
+            </param>
+            <param argument="--organism-ploidy" type="integer" value="2" label="Organism ploidy" help="All contigs with unspecified ploidies are assumned the organism ploidy"/>
+            <param argument="--contig-ploidies" type="text" value="Y=1 chrY=1 MT=1 chrM=1" label="List of contig (contig=ploidy) or sample contig (sample:contig=ploidy) ploidies"/> <!-- TODO - make repeat? -->
+            <param argument="--contig-ploidies-file" type="data" format="txt,tabular" label="File containing a list of contig (contig=ploidy) or sample contig (sample:contig=ploidy) ploidies" help="file should have one ploidy value per line"/>
+            <param argument="--min-variant-posterior" type="integer" value="1" label="Report variant alleles with posterior probability greater than this"/> 
+            <param argument="--refcall" type="select" optional="true">
+                <option value="blocked">Caller will report reference confidence calls in automatically sized blocks</option>
+                <option value="positional">Caller will report reference confidence calls for each position</option>
+            </param>
+            <param argument="--min-refcall-posterior" type="integer" value="2" label="Report reference alleles with posterior probability (PHRED scale) greater than this"/>
+            <param argument="--snp-heterozygosity" type="float" value="0.001" label="Germline SNP hetereozygosity for the given samples"/>
+            <param argument="--snp-heterozygosity-stdev" type="float" value="0.01" label="Standard deviation of the germline SNP hetereozygosity used for the given samples"/>
+            <param argument="--indel-heterozygosity" type="float" value="0.0001" label="Germline indel heterozygosity for the given samples"/>
+            <param argument="--use-uniform-genotype-priors" type="boolean" truevalue="--use-uniform-genotype-priors" falsevalue="" checked="false" label="Use a uniform prior model when calculating genotype posteriors"/>
+            <param argument="--max-genotypes" type="integer" value="5000" label="The maximum number of genotypes to evaluate"/>
+            <param argument="--max-joint-genotypes" type="integer" value="1000000" label="The maximum number of joint genotype vectors to consider when computing joint genotype posterior probabilities"/>
+            <param argument="--use-independent-genotype-priors" type="boolean" truevalue="--use-independent-genotype-priors" falsevalue="" label="Use independent genotype priors for joint calling"/>
+            <param argument="--model-posterior" type="" optional="true"/> <!-- TODO - look into this one-->
+            <param argument="--inactive-flank-scoring" type="boolean" truevalue="--inactive-flank-scoring 1" falsevalue="--inactive-flank-scoring 0" checked="true" label="Disable additional calculation to adjust alignment score when there are inactive canidates in haplotype flanking regions?"/>
+            <param argument="--model-mapping-quality" type="boolean" truevalue="--model-mapping-quality 1" falsevalue="--model-mapping-quality 0" checked="true" label="Include the read mapping quality in the haplotype likelihood calculation?"/>
+            <param argument="--sequence-error-model" type="select" label="The sequencer error model to use">
+                <option value="HiSeq" selected="true">HiSeq</option>
+                <option value="xTen">xTen</option>
+            </param>
+            <param argument="--max-vb-seeds" type="integer" value="12" label="Maximum number of seeds to use for Variational Bayes algorithms"/>
         </section>
         <section title="Phasing">
-            <param argument="--phasing-level"/>
-            <param argument="--min-phase-score"/>
+            <param argument="--phasing-level" type="select">
+                <option value="minimal">Minimal</option>
+                <option value="conservative">Conservative</option>
+                <option value="moderate">Moderate</option>
+                <option value="normal">Normal</option>
+                <option value="aggressive">Aggressive</option>
+            </param>
+            <param argument="--min-phase-score" type="integer" value="10" label="Minumum phase score (PHRED scale) required to report sites as phased"/>
         </section>
         <section title="Variant filtering">
-            <param argument="--call-filtering"/>
+            <param argument="--call-filtering"/> <!-- TODO - something clever with conditional block here + macros -->
             <param argument="--filter-expression"/>
             <param argument="--somatic-filter-expression"/>
             <param argument="--denovo-filter-expression"/>
             <param argument="--refcall-filter-expression"/>
-            <param argument="--use-calling-reads-for-filtering"/>
-            <param argument="--keep-unfiltered-calls"/>
-            <param argument="--training-annotations"/>
-            <param argument="--filter-vcf"/> <!-- TODO - make this a separate tool?-->
-            <param argument="--forest-file" optional="true"/>
-            <param argument="--somatic-forest-file" optional="true"/>
+            <param argument="--use-calling-reads-for-filtering" type="boolean" truevalue=""/>
+            <param argument="--keep-unfiltered-calls" type="boolean" truevalue="--keep-unfiltered-calls" falsevalue="" checked="false" label="Keep a copy of unfiltered calls?"/>
+            <param argument="--training-annotations" type=""/>
+            <!-- <param argument="forest-file" optional="true"/>
+            <param argument="somatic-forest-file" optional="true"/> --> <!-- TODO - Add this in? might need new data type?-->
         </section>
     </inputs>
     <outputs>

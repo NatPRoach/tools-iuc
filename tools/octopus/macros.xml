@@ -30,13 +30,13 @@
 
     <token name="@REF_FASTA@"><![CDATA[
         #if $reference_source.reference_source_selector == 'history':
-            #if $reference_source.ref_file.ext.endswith(".gz")
-                gunzip -c '$reference_source.ref_file' > reference.fa &&
+            #if $reference_source.reference.ext.endswith(".gz")
+                gunzip -c '$reference_source.reference' > reference.fa &&
             #else
-                ln -f -s '$reference_source.ref_file' reference.fa &&
+                ln -f -s '$reference_source.reference' reference.fa &&
             #end if
         #else:
-            ln -f -s '$reference_source.ref_file.fields.path' reference.fa &&
+            ln -f -s '$reference_source.reference.fields.path' reference.fa &&
         #end if
     ]]></token>
 
@@ -50,7 +50,7 @@
                 <option value="history">Use a genome from history</option>
             </param>
             <when value="cached">
-                <param name="ref_file" type="select" label="Using reference genome" help="Select genome from the list">
+                <param argument="--reference" type="select" label="Reference genome file to be analysed" help="Select genome from the list. Target regions will be extracted from the reference index if not provided explicitly.">
                     <options from_data_table="all_fasta">
                         <filter type="sort_by" column="2"/>
                         <validator type="no_options" message="No reference genomes are available"/>
@@ -59,7 +59,7 @@
                 </param>
             </when>
             <when value="history">
-                <param name="ref_file" type="data" format="fasta,fasta.gz" label="Use the following dataset as the reference sequence" help="You can upload a FASTA or FASTQ sequence to the history and use it as reference"/>
+                <param argument="--reference" type="data" format="fasta,fasta.gz" label="Reference genome file to be analysed" help="Target regions will be extracted from the reference index if not provided explicitly"/>
             </when>
         </conditional>
     </xml>
