@@ -65,7 +65,7 @@ octopus
         </section>
         <section name="inputs_and_outputs" title="Inputs and Outputs" expanded="true">
             <expand macro="reference"/>
-            <param argument="--reads" type="data" multiple="true" format="bam,cram" label="BAM/CRAM files to be analyzed" help="Multiple can be specified"/>
+            <param argument="--reads" type="data" format="bam,cram" label="BAM/CRAM files to be analyzed"/>
             <section name="regions" title="Regions" expanded="true">
                 <param argument="--one-based-indexing" type="boolean" truevalue="--one-based-indexing" falsevalue="" checked="false" label="Input regions are given using one based indexing rather than zero"/>
                 <param argument="--regions" type="text" label="Region (chrom:begin-end) to be analyzed"/> <!-- TODO - make repeat? -->
@@ -81,44 +81,58 @@ octopus
                 <option value="asInReferenceIndex">asInReferenceIndex</option> <!-- TODO - see if there are other options-->
             </param>
             <param argument="--sites-only" type="boolean" truevalue="--sites-only" falsevalue="" checked="false" label="Only report call sites" help="i.e. report sites without sample genotype information"/>
-            <param argument="--regenotype" type="data" type="vcf" optional="true" label="VCF file specifying calls to regenotype, only sites in this file will appear in the final output"/>
+            <param argument="--regenotype" type="data" type="vcf" optional="true" label="VCF file specifying calls to regenotype, only sites in this file will appear in the final output"/> <!-- This is subject to change in later releases-->
             <param argument="--legacy" type="boolean" truevalue="--legacy" falsevalue="" checked="false" label="Output a legacy version of final callset in addition to the native version?"/>
             <param argument="--bamout" type="boolean" truevalue="--bamout " falsevalue="" checked="false" label="Output realigned BAM files?"/>
             <param argument="--split-bamout" type="boolean" truevalue="--split-bamout" falsevalue="" checked="false" label="Output split realigned BAM files?"/>
             <param argument="--data-profile" type="boolean" truevalue="--data-profile" falsevalue="" checked="false" label="Output a profile of polymorphisms and errors found in the data?"/>
         </section>
         <section name="read_transformations" title="Read transformations" expanded="false">
-            <param argument="--read-transforms"/> <!-- TODO - something clever with conditional block here + macros -->
-            <param argument="--mask-low-quality-tails"/>
-            <param argument="--mask-tails"/>
-            <param argument="--soft-clip-masking"/>
-            <param argument="--soft-clip-mask-threshold"/>
-            <param argument="--mask-soft-clipped-boundary-bases"/>
-            <param argument="--adapter-masking"/>
-            <param argument="--overlap-masking"/>
-            <param argument="--mask-inverted-soft-clipping"/>
-            <param argument="--mask-3prime-shifted-soft-clipped-heads"/>
+            <conditional name="read_transformations">
+                <param argument="--read-transforms" type="select">
+                    <option value="on" selected="true">Don't disable all read transformations</option>
+                    <option value="off">Disable all read transformations</option>
+                </param>
+                <when value="on">
+                    <param argument="--mask-low-quality-tails" type="integer" optional="true" label="Masks read tail bases with base quality less than this"/>
+                    <param argument="--mask-tails" type="integer" optional="true" label="Unconditionally mask this many read tail sbases"/>
+                    <param argument="--soft-clip-masking" type="boolean" truevalue="--soft-clip-masking 1" falsevalue="--soft-clip-masking 0" checked="true" label="Turn on soft clip base recalibration?"/>
+                    <param argument="--soft-clip-mask-threshold" type="integer" optional="true" label="If provided, only soft clipped bases with quality less than this will be recalibrated, rather than all bases"/>
+                    <param argument="--mask-soft-clipped-boundary-bases" type="integer" value="2" label="Masks this number of adjacent non soft clipped bases when soft clipped bases are present"/>
+                    <param argument="--adapter-masking" type="boolean" truevalue="--adapter-masking 1" falsevalue="--adapter-masking 0" checked="true" label="Enable adapter detection and masking?"/>
+                    <param argument="--overlap-masking" type="boolean" truevalue="--overlap-masking 1" falsevalue="--overlap-masking 0" checked="true" label="Enable read segment overlap masking?"/>
+                    <param argument="--mask-inverted-soft-clipping" type="boolean" truevalue="--mask-inverted-soft-clipping 1" falsevalue="--mask-inverted-softclipping 0" checked="false" label="Enable masking of soft clipped read ends that are inverted copies of proximate reference sequence?"/>
+                    <param argument="--mask-3prime-shifted-soft-clipped-heads" type="boolean" truevalue="--mask-3prime-shifted-soft-clipped-heads 1" falsevalue="--mask-3prime-shifted-soft-clipped-heads 0" checked="false" label="Enable masking of softclipped read heads that are copies of proximate 3' reference sequence?"/>
+                </when>
+                <when value="off"/>
+            </conditional>
         </section>
         <section name="read_filtering" title="Read filtering" expanded="false">
-            <param argument="--read-filtering" /> <!-- TODO - something clever with conditional block here + macros -->
-            <param argument="--consider-unmapped-reads" />
-            <param argument="--min-mapping-quality" />
-            <param argument="--good-base-quality" />
-            <param argument="--min-good-base-fraction" />
-            <param argument="--min-good-bases" />
-            <param argument="--allow-qc-fails" />
-            <param argument="--min-read-length" />
-            <param argument="--max-read-legnth" />
-            <param argument="--allow-marked-duplicates" />
-            <param argument="--allow-octopus-duplicates" />
-            <param argument="--allow-secondary-alignments" />
-            <param argument="--allow-supplementary-alignments"/>
-            <param argument="--no-reads-with-unmapped-segments"/>
-            <param argument="--no-reads-with-distant-segments"/>
-            <param argument="--no-adapter-contaminated-reads"/>
-            <param argument="--disable-downsampling"/>
-            <param argument="--downsample-above"/>
-            <param argument="--downsample-target"/>
+            <param argument="--read-filtering" type="select">
+                <option value="on" selected="true">Dont disable all read filtering</option>
+                <option value="off">Disable all read filtering</option>
+            </param>
+            <when value="on">
+                <param argument="--consider-unmapped-reads" type="boolean" truevalue="--consider-unmapped-reads" falsevalue="" label="Allow reads marked as unmapped to be used for calling?"/>
+                <param argument="--min-mapping-quality" type="integer" value="20" label="Minimum read mapping quality required to consider a read for calling"/>
+                <param argument="--good-base-quality" type="integer" value="20" label="Base quality threshold used by --min-good-bases and --min-good-base-fraction filters"/>
+                <param argument="--min-good-base-fraction" type="float" optional="true" label="The maximum fraction of bases below --min-good-base-quality before the read is discarded"/> <!-- TODO - figure out how to deal with defaults for this if it's on. Conditional? Occurs elsewhere too everywhere with optional parameter-->
+                <param argument="--min-good-bases" type="integer" value="20" label="Minimum number of bases with quality at or above --min-base-quality before read is considered"/>
+                <param argument="--allow-qc-fails" type="boolean" truevalue="" falsevalue="--allow-qc-fails" checked="true" label="Filter reads marked as QC failed?"/>
+                <param argument="--min-read-length" type="integer" optional="true" label="Filter reads shorter than this"/>
+                <param argument="--max-read-legnth" type="integer" optional="true" label="Filter reads longer than this"/>
+                <param argument="--allow-marked-duplicates" type="boolean" truevalue="--allow-marked-duplicates" falsevalue="" checked="false" label="Allow reads marked as duplicate in alignment record?"/>
+                <param argument="--allow-octopus-duplicates" type="boolean" truevalue="--allow-octopus-duplicates" falsevalue="" checked="false" label="Allow reads considered duplicates by octopus?"/>
+                <param argument="--allow-secondary-alignments" type="boolean" truevalue="--allow-secondary-alignments" falsevalue="" checked="false" label="Allow reads marked as secondary alignments?"/>
+                <param argument="--allow-supplementary-alignments" type="boolean" truevalue="--allow-supplementary-alignments" falsevalue="" checked="false" label="Allow reads marked as supplementary alignments?"/>
+                <param argument="--no-reads-with-unmapped-segments" type="boolean" truevalue="--no-reads-with-unmapped-segments" falsevalue="" checked="false" label="Filter redas with unmapped template segments to be used for calling?"/>
+                <param argument="--no-reads-with-distant-segments" type="boolean" truevalue="--no-reads-with-distant-segments" falsevalue="" checked="false" label="Filter reads with template segments that are on different contigs?"/>
+                <param argument="--no-adapter-contaminated-reads" type="boolean" truevalue="--no-adapter-contaminated-reads" falsevalue="" checked="false" label="Filter reads with possible adapter contamination"/>
+                <param argument="--disable-downsampling" type="boolean" truevalue="--disable-downsampling" falsevalue="" label="Disable downsampling?"/>
+                <param argument="--downsample-above" type="integer" value="1000" label="Downsample reads in regions where coverage is over this"/>
+                <param argument="--downsample-target" type="integer" value="500" label="The target coverage for the downsampler"/>
+            </when>
+            <when value="off"/>
         </section>
         <section name="candidate_variant_generation" title="Candidate variant generation" expanded="false">
             <param argument="--raw-cigar-candidate-generator" type="boolean" truevalue="--raw-cigar-candidate-generation 1" falsevalue="--raw-cigar-candidate-generation 0" checked="true" label="Enable candidate generation from raw read alignments (CIGAR strings)?"/>
@@ -134,12 +148,12 @@ octopus
             <param argument="--num-fallback-kmers" type="integer" value="10" label="How many local assembly fallback kmer sizes to use if the default sizes fail"/>
             <param argument="--fallback-kmer-gap" type="integer" value="10" label="The gap size used to generate local assembly fallback kmers"/>
             <param argument="--max-region-to-assemble" type="integer" value="400" label="The maximum region size that can be used for local assembly"/>
-            <param argument="--max-assemble-region-overlap" type="integer" value="200" label="The maximum number of bases allowed to overlap assembly regions"/>            <param argument="--assemble-all"/>
+            <param argument="--max-assemble-region-overlap" type="integer" value="200" label="The maximum number of bases allowed to overlap assembly regions"/> <!-- Per manual - Likely to change in later relases -->
             <param argument="--assemble-all" type="boolean" truevalue="--assemble-all" falsevalue="" checked="false" label="Forces all regions to be assembled"/>
             <param argument="--assembler-mask-base-quality" type="integer" value="10" label="Aligned bases with quality less than this will be converted to reference before being inserted into the De Bruijn graph"/>
             <param argument="--min-kmer-prune" type="integer" value="2" label="Minimum number of read observations to keep a kmer in the assembly graph before bubble extraction"/>
             <param argument="--max-bubbles" type="integer" value="30" label="Maximum number of bubbles to extract from the assembly graph"/>
-            <param argument="--min-bubble-score" type="integer" value="2" label="Minimum bubble score that will be extracted from the assembly graph"/>
+            <param argument="--min-bubble-score" type="integer" value="2" label="Minimum bubble score that will be extracted from the assembly graph"/> <!-- Per manual - Likely to change in later releases -->
         </section>
         <section name="haplotype_generation" title="Haplotype generation" expanded="false">
             <param argument="--max-haplotypes" type="integer" value="200" label="Maximum number of candidate haplotypes the caller may consider" help="If a region contains more candidate haplotypes that this then filtering is applied"/>
@@ -157,9 +171,31 @@ octopus
             <param argument="--protect-reference-haplotype" type="boolean" truevalue="--protect-reference-haplotype 1" falsevalue="--protect-reference-haplotype 0" checked="true" label="Protect the reference haplotype from filtering?"/>
         </section>
         <section name="calling" title="Calling" expanded="true">
-            <param argument="--caller" type="select" label="Which of the octopus callers to use">
-                <option value="population">Population - </option>
-            </param>
+            <conditional name="caller">
+                <param argument="--caller" type="select" label="Which of the octopus callers should be used?">
+                    <option value="individual"></option>
+                    <option value="population"></option>
+                    <option value="trio"></option>
+                    <option value="cancer"></option>
+                    <!-- <option value="polyclone"></option>
+                    <option value="cell"></option> --> <!-- These are added in later versions -->
+                </param>
+                <when value="individual"/>
+                </when>
+                <when value="population"/>
+                </when>
+                <when value="trio"/>
+                    <param argument="--maternal-sample"/>
+                    <param argument="--paternal-sample"/>
+                </when>
+                <when value="cancer"/>
+                    <param argument="--normal-sample" optional="true"/>
+                </when>
+                <when value="polyclone"/>
+                </when>
+                <when value="cell"/>
+                </when>
+            </conditional>
             <param argument="--organism-ploidy" type="integer" value="2" label="Organism ploidy" help="All contigs with unspecified ploidies are assumned the organism ploidy"/>
             <param argument="--contig-ploidies" type="text" value="Y=1 chrY=1 MT=1 chrM=1" label="List of contig (contig=ploidy) or sample contig (sample:contig=ploidy) ploidies"/> <!-- TODO - make repeat? -->
             <param argument="--contig-ploidies-file" type="data" format="txt,tabular" label="File containing a list of contig (contig=ploidy) or sample contig (sample:contig=ploidy) ploidies" help="file should have one ploidy value per line"/>
@@ -197,7 +233,7 @@ octopus
         </section>
         <section name="variant_filtering" title="Variant filtering">
             <conditional value=>
-            <param argument="--call-filtering"/> <!-- TODO - something clever with conditional block here + macros -->
+            <param argument="--call-filtering"/>
             <param argument="--filter-expression"/>
             <param argument="--somatic-filter-expression"/>
             <param argument="--denovo-filter-expression"/>
