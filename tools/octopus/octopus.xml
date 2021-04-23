@@ -13,41 +13,162 @@
 @REF_FASTA@
 
 octopus
+###################
+## Begin General ##
+###################
     '${log_level}'
     '${speed}'
     --output '${variants_out}'
     --threads \${GALAXY_SLOTS:-4}
+#################
+## End General ##
+#################
+
+##############################
+## Begin Inputs and Outputs ##
+##############################
     --reference reference.fa
     --reads
-#for $read in $reads:
+#for $read in $inputs_and_outputs.reads:
     '${read}'
 #end for
-    '${one_based_indexing}'
-    --regions
-#for $region in $regions:
-    '${region.region}'
-#end for
-    --regions-file '${regions_file}'
-    --skip-regions
-#for $region in $skip_regions:
-    '${region.skip_region}'
-#end for
-    --skip-regions-file '${skip_regions_file}'
-    --samples
-#for $sample in $samples:
-    '${sample.sample}'
-#end for
-    --samples-file '${samples_file}'
-    '${ignore_unmapped_contigs}'
-    --pedigree '${pedigree}'
-## Little unclear on this. Is it a text param or something else. Come back to it
-##    --contig-output-order
-    '${sites_only}'
-    '${legacy}'
-    --regenotype '${regenotype}'
-    --bamout '${bam_out}'
-    --split-bam-out '${split_bamout}'
-    --data-profile '${profile_out}'
+    ###################
+    ## Begin Regions ##
+    ###################
+        '${inputs_and_outputs.regions.one_based_indexing}'
+        --regions '${inputs_and_outputs.regions.regions}'
+        #if $inputs_and_outputs.regions.regions_file:
+            --regions-file '${inputs_and_outputs.regions.regions_file}'
+        #end if
+        --skip-regions '${inputs_and_outputs.regions.skip_regions}'
+        #if $inputs_and_outputs.regions.skip_regions_file:
+            --skip-regions-file '${inputs_and_outputs.regions.skip_regions_file}'
+        #end if
+    #################
+    ## End Regions ##
+    #################
+    --samples '${inputs_and_outputs.samples}'
+    #if $inputs_and_outputs.samples_file
+        --samples-file '${inputs_and_outputs.samples_file}'
+    #end if
+    '${inputs_and_outputs.ignore_unmapped_contigs}'
+    --pedigree '${inputs_and_outputs.pedigree}'
+    --contig-output-order '${inputs_and_outputs.contig_output_order}'
+    '${inputs_and_outputs.sites_only}'
+    #if $inputs_and_outputs.regenotype:
+        --regenotype '${inputs_and_outputs.regenotype}'
+    #end if
+    '${inputs_and_outputs.legacy}'
+    '${inputs_and_outputs.bamout}'
+    '${inputs_and_outputs.split_bamout}'
+    '${inputs_and_outputs.data_profile}'
+############################
+## End Inputs and Outputs ##
+############################
+
+################################
+## Begin Read Transformations ##
+################################
+#if $read_transformations.read_transformations.read_transforms == 'on':
+    --read_transforms 1
+    #if $read_transformations.read_transformations.mask_low_quality_tails:
+        --mask-low-quality-tails '${read_transformations.read_transformations.mask_low_quality_tails}'
+    #end if
+    #if $read_transformations.read_transformations.mask_tails:
+        --mask-tails '${read_transformations.read_transformations.mask_tails}'
+    #end if
+    '${read_transformations.read_transformations.soft_clip_masking}'
+    #if $read_transformations.read_transformations.soft_clip_masking_threshold:
+        --soft-clip-mask-threshold '${read_transformations.read_transformations.soft_clip_masking_threshold}'
+    #end if
+    --mask-soft-clipped-boundary-bases '${read_transformations.read_transformations.mask_soft_clipped_boundary_bases}'
+    '${adapter_masking}'
+    '${overlap_masking}'
+    '${mask_inverted_soft_clipping}'
+    '${mask_3prime_shifted_soft_clipped_heads}'
+#else:
+    --read-transforms 0
+#end if
+##############################
+## End Read Transformations ##
+##############################
+
+##########################
+## Begin Read Filtering ##
+##########################
+#if $read_filtering.read_filtering.read_filtering == 'on':
+    --read_filtering 1
+    '${read_filtering.read_filtering.consider_unmapped_reads}'
+    --min-mapping-quality '${read_filtering.read_filtering.min_mapping_quality}'
+    --good-base-quality '${read_filtering.read_filtering.good_base_quality}'
+    #if $read_filtering.read_filtering.min_good_base_fraction:
+        
+    #end if
+    --min-good-bases '${read_filtering.read_filtering.min_good_bases}'
+    '${read_filtering.read_filtering.allow_qc_fails}'
+    '${read_filtering.read_filtering.min_read_length}'
+    '${read_filtering.read_filtering.max_read_length}'
+    '${read_filtering.read_filtering.allow_marked_duplicates}'
+    '${read_filtering.read_filtering.allow_octopus_duplicates}'
+    '${read_filtering.read_filtering.allow_secondary_alignments}'
+    '${read_filtering.read_filtering.allow_supplementary_alignments}'
+    '${read_filtering.read_filtering.no_reads_with_unmapped_segments}'
+    '${read_filtering.read_filtering.no_reads_with_distant_segments}'
+    '${read_filtering.read_filtering.no_adapter_contaminated_reads}'
+    '${read_filtering.read_filtering.disable_downsampling}'
+    --downsample-above '${read_filtering.read_filtering.downsample_above}'
+    --downsample-target '${read_filtering.read_filtering.downsample_target}'
+#else
+    --read-filtering 0
+#end if
+########################
+## End Read Filtering ##
+########################
+'${candidate_variant_generation.raw_cigar_candidate_generator}'
+'${candidate_variant_generation.repeat_candidate_generator}'
+'${candidate_variant_generation.assembly_candidate_generator}'
+#if $candidate_variant_generation.source_candidates:
+    --source-candidates '${candidate_variant_generation.source_candidates}'
+#end if
+########################################
+## Begin Candidate Variant Generation ##
+########################################
+
+######################################
+## End Candidate Variant Generation ##
+######################################
+
+################################
+## Begin Haplotype Generation ##
+################################
+
+##############################
+## End Haplotype Generation ##
+##############################
+
+###################
+## Begin Calling ##
+###################
+
+#################
+## End Calling ##
+#################
+
+###################
+## Begin Phasing ##
+###################
+
+#################
+## End Phasing ##
+#################
+
+#############################
+## Begin Variant Filtering ##
+#############################
+
+###########################
+## End Variant Filtering ##
+###########################
 
 && cat octopus_debug.log 1>&2
     ]]></command>
@@ -108,31 +229,33 @@ octopus
             </conditional>
         </section>
         <section name="read_filtering" title="Read filtering" expanded="false">
-            <param argument="--read-filtering" type="select">
-                <option value="on" selected="true">Dont disable all read filtering</option>
-                <option value="off">Disable all read filtering</option>
-            </param>
-            <when value="on">
-                <param argument="--consider-unmapped-reads" type="boolean" truevalue="--consider-unmapped-reads" falsevalue="" label="Allow reads marked as unmapped to be used for calling?"/>
-                <param argument="--min-mapping-quality" type="integer" value="20" label="Minimum read mapping quality required to consider a read for calling"/>
-                <param argument="--good-base-quality" type="integer" value="20" label="Base quality threshold used by --min-good-bases and --min-good-base-fraction filters"/>
-                <param argument="--min-good-base-fraction" type="float" optional="true" label="The maximum fraction of bases below --min-good-base-quality before the read is discarded"/> <!-- TODO - figure out how to deal with defaults for this if it's on. Conditional? Occurs elsewhere too everywhere with optional parameter-->
-                <param argument="--min-good-bases" type="integer" value="20" label="Minimum number of bases with quality at or above --min-base-quality before read is considered"/>
-                <param argument="--allow-qc-fails" type="boolean" truevalue="" falsevalue="--allow-qc-fails" checked="true" label="Filter reads marked as QC failed?"/>
-                <param argument="--min-read-length" type="integer" optional="true" label="Filter reads shorter than this"/>
-                <param argument="--max-read-legnth" type="integer" optional="true" label="Filter reads longer than this"/>
-                <param argument="--allow-marked-duplicates" type="boolean" truevalue="--allow-marked-duplicates" falsevalue="" checked="false" label="Allow reads marked as duplicate in alignment record?"/>
-                <param argument="--allow-octopus-duplicates" type="boolean" truevalue="--allow-octopus-duplicates" falsevalue="" checked="false" label="Allow reads considered duplicates by octopus?"/>
-                <param argument="--allow-secondary-alignments" type="boolean" truevalue="--allow-secondary-alignments" falsevalue="" checked="false" label="Allow reads marked as secondary alignments?"/>
-                <param argument="--allow-supplementary-alignments" type="boolean" truevalue="--allow-supplementary-alignments" falsevalue="" checked="false" label="Allow reads marked as supplementary alignments?"/>
-                <param argument="--no-reads-with-unmapped-segments" type="boolean" truevalue="--no-reads-with-unmapped-segments" falsevalue="" checked="false" label="Filter redas with unmapped template segments to be used for calling?"/>
-                <param argument="--no-reads-with-distant-segments" type="boolean" truevalue="--no-reads-with-distant-segments" falsevalue="" checked="false" label="Filter reads with template segments that are on different contigs?"/>
-                <param argument="--no-adapter-contaminated-reads" type="boolean" truevalue="--no-adapter-contaminated-reads" falsevalue="" checked="false" label="Filter reads with possible adapter contamination"/>
-                <param argument="--disable-downsampling" type="boolean" truevalue="--disable-downsampling" falsevalue="" label="Disable downsampling?"/>
-                <param argument="--downsample-above" type="integer" value="1000" label="Downsample reads in regions where coverage is over this"/>
-                <param argument="--downsample-target" type="integer" value="500" label="The target coverage for the downsampler"/>
-            </when>
-            <when value="off"/>
+            <conditional name="read_filtering">
+                <param argument="--read-filtering" type="select">
+                    <option value="on" selected="true">Dont disable all read filtering</option>
+                    <option value="off">Disable all read filtering</option>
+                </param>
+                <when value="on">
+                    <param argument="--consider-unmapped-reads" type="boolean" truevalue="--consider-unmapped-reads" falsevalue="" label="Allow reads marked as unmapped to be used for calling?"/>
+                    <param argument="--min-mapping-quality" type="integer" value="20" label="Minimum read mapping quality required to consider a read for calling"/>
+                    <param argument="--good-base-quality" type="integer" value="20" label="Base quality threshold used by --min-good-bases and --min-good-base-fraction filters"/>
+                    <param argument="--min-good-base-fraction" type="float" optional="true" label="The maximum fraction of bases below --min-good-base-quality before the read is discarded"/> <!-- TODO - figure out how to deal with defaults for this if it's on. Conditional? Occurs elsewhere too everywhere with optional parameter-->
+                    <param argument="--min-good-bases" type="integer" value="20" label="Minimum number of bases with quality at or above --min-base-quality before read is considered"/>
+                    <param argument="--allow-qc-fails" type="boolean" truevalue="" falsevalue="--allow-qc-fails" checked="true" label="Filter reads marked as QC failed?"/>
+                    <param argument="--min-read-length" type="integer" optional="true" label="Filter reads shorter than this"/>
+                    <param argument="--max-read-length" type="integer" optional="true" label="Filter reads longer than this"/>
+                    <param argument="--allow-marked-duplicates" type="boolean" truevalue="--allow-marked-duplicates" falsevalue="" checked="false" label="Allow reads marked as duplicate in alignment record?"/>
+                    <param argument="--allow-octopus-duplicates" type="boolean" truevalue="--allow-octopus-duplicates" falsevalue="" checked="false" label="Allow reads considered duplicates by octopus?"/>
+                    <param argument="--allow-secondary-alignments" type="boolean" truevalue="--allow-secondary-alignments" falsevalue="" checked="false" label="Allow reads marked as secondary alignments?"/>
+                    <param argument="--allow-supplementary-alignments" type="boolean" truevalue="--allow-supplementary-alignments" falsevalue="" checked="false" label="Allow reads marked as supplementary alignments?"/>
+                    <param argument="--no-reads-with-unmapped-segments" type="boolean" truevalue="--no-reads-with-unmapped-segments" falsevalue="" checked="false" label="Filter redas with unmapped template segments to be used for calling?"/>
+                    <param argument="--no-reads-with-distant-segments" type="boolean" truevalue="--no-reads-with-distant-segments" falsevalue="" checked="false" label="Filter reads with template segments that are on different contigs?"/>
+                    <param argument="--no-adapter-contaminated-reads" type="boolean" truevalue="--no-adapter-contaminated-reads" falsevalue="" checked="false" label="Filter reads with possible adapter contamination"/>
+                    <param argument="--disable-downsampling" type="boolean" truevalue="--disable-downsampling" falsevalue="" label="Disable downsampling?"/>
+                    <param argument="--downsample-above" type="integer" value="1000" label="Downsample reads in regions where coverage is over this"/>
+                    <param argument="--downsample-target" type="integer" value="500" label="The target coverage for the downsampler"/>
+                </when>
+                <when value="off"/>
+            </conditional>
         </section>
         <section name="candidate_variant_generation" title="Candidate variant generation" expanded="false">
             <param argument="--raw-cigar-candidate-generator" type="boolean" truevalue="--raw-cigar-candidate-generation 1" falsevalue="--raw-cigar-candidate-generation 0" checked="true" label="Enable candidate generation from raw read alignments (CIGAR strings)?"/>
@@ -177,19 +300,20 @@ octopus
                     <option value="population"></option>
                     <option value="trio"></option>
                     <option value="cancer"></option>
-                    <!-- <option value="polyclone"></option>
-                    <option value="cell"></option> --> <!-- These are added in later versions -->
+                    <!-- These are added in later versions -->
+                    <!-- <option value="polyclone"></option> -->
+                    <!-- <option value="cell"></option> -->
                 </param>
                 <when value="individual">
                 </when>
                 <when value="population">
                 </when>
                 <when value="trio">
-                    <param argument="--maternal-sample"/>
-                    <param argument="--paternal-sample"/>
+                    <param argument="--maternal-sample" type="text" value=""/>
+                    <param argument="--paternal-sample" type="text" value=""/>
                 </when>
                 <when value="cancer">
-                    <param argument="--normal-sample" optional="true"/>
+                    <param argument="--normal-sample" type="text" value="" optional="true"/>
                 </when>
                 <when value="polyclone">
                 </when>
@@ -212,7 +336,7 @@ octopus
             <param argument="--max-genotypes" type="integer" value="5000" label="The maximum number of genotypes to evaluate"/>
             <param argument="--max-joint-genotypes" type="integer" value="1000000" label="The maximum number of joint genotype vectors to consider when computing joint genotype posterior probabilities"/>
             <param argument="--use-independent-genotype-priors" type="boolean" truevalue="--use-independent-genotype-priors" falsevalue="" label="Use independent genotype priors for joint calling"/>
-            <param argument="--model-posterior" type="" optional="true"/> <!-- TODO - look into this one-->
+            <param argument="--model-posterior" type="boolean" truevalue="--model-posterior 1" falsevalue="--model-posterior 0" label="Calculate model posterior for every call?"/>
             <param argument="--inactive-flank-scoring" type="boolean" truevalue="--inactive-flank-scoring 1" falsevalue="--inactive-flank-scoring 0" checked="true" label="Disable additional calculation to adjust alignment score when there are inactive canidates in haplotype flanking regions?"/>
             <param argument="--model-mapping-quality" type="boolean" truevalue="--model-mapping-quality 1" falsevalue="--model-mapping-quality 0" checked="true" label="Include the read mapping quality in the haplotype likelihood calculation?"/>
             <param argument="--sequence-error-model" type="select" label="The sequencer error model to use">
@@ -233,16 +357,23 @@ octopus
         </section>
         <section name="variant_filtering" title="Variant filtering">
             <conditional name="variant_filtering">
-                <param argument="--call-filtering"/>
-                <param argument="--filter-expression"/>
-                <param argument="--somatic-filter-expression"/>
-                <param argument="--denovo-filter-expression"/>
-                <param argument="--refcall-filter-expression"/>
-                <param argument="--use-calling-reads-for-filtering" type="boolean" truevalue=""/>
-                <param argument="--keep-unfiltered-calls" type="boolean" truevalue="--keep-unfiltered-calls" falsevalue="" checked="false" label="Keep a copy of unfiltered calls?"/>
-                <param argument="--training-annotations" type=""/>
-                <!-- <param argument="forest-file" optional="true"/>
-                <param argument="somatic-forest-file" optional="true"/> --> <!-- TODO - Add this in? might need new data type?-->
+                <param argument="--call-filtering" type="select">
+                    <option value="on" selected="true">Don't disable all variant call filtering</option>
+                    <option value="off">Disable all variant call filtering</option>
+                </param>
+                <when value="on">
+                    <!-- TODO - make these filters repeats w/ option to leave blank to use default?...  Maybe...-->
+                    <param argument="--filter-expression" type="text" value="QUAL &lt; 10 | MQ &lt; 10 | MP &lt; 10 | AF &lt; 0.05 | SB &gt; 0.98 | BQ &lt; 15 | DP &lt; 1" label="Boolean expression used to filter variant calls"/>
+                    <param argument="--somatic-filter-expression" type="text" value="QUAL &lt; 2 | GQ &lt; 20 | MQ &lt; 30 | SMQ &lt; 40 | SB &gt; 0.9 | SD &gt; 0.9 | BQ &lt; 20 | DP &lt; 3 | MF &gt; 0.2 | NC &gt; 1 | FRF &gt; 0.5" label="Boolean expression to use to filter somatic variant calls"/>
+                    <param argument="--denovo-filter-expression" type="text" value="QUAL &lt; 50 | PP &lt; 40 | GQ &lt; 20 | MQ &lt; 30 | AF &lt; 0.1 | SB &gt; 0.95 | BQ &lt; 20 | DP &lt; 10 | DC &gt; 1 | MF &gt; 0.2 | FRF &gt; 0.5 | MP &lt; 30 | MQ0 &gt; 2" label="Boolean expression to use to filter de novo variant calls"/>
+                    <param argument="--refcall-filter-expression" type="text" value="QUAL &lt; 2 | GQ &lt; 20 | MQ &lt; 10 | DP &lt; 10 | MF &gt; 0.2" label="Boolean expression to fulter homozygous reference calls"/>
+                    <param argument="--use-calling-reads-for-filtering" type="boolean" truevalue="--use-calling-reads-for-filtering 1" falsevalue="--use-calling-reads-for-filtering 0" checked="false" label="Use the original reads used for variant calling for filtering?"/>
+                    <param argument="--keep-unfiltered-calls" type="boolean" truevalue="--keep-unfiltered-calls" falsevalue="" checked="false" label="Keep a copy of unfiltered calls?"/>
+                    <param argument="--training-annotations" type="boolean" truevalue="--training-annotations training_annotations.vcf" falsevalue="" label="Output all calls as PASS and annotate output VCF with the given measures of the measure set?"/>
+                    <param argument="--forest-file" type="data" format="txt" optional="true" label="Trained Ranger random forest file"/>
+                    <param argument="--somatic-forest-file" type="data" format="txt" optional="true" label="Trained Ranger random forest file for somatic variants"/> <!-- TODO - Add this in? might need new data type?-->
+                </when>
+                <when value="off"/>
             </conditional>
         </section>
     </inputs>
