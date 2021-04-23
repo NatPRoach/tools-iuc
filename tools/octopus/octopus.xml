@@ -16,8 +16,8 @@ octopus
 ###################
 ## Begin General ##
 ###################
-    '${log_level}'
-    '${speed}'
+    '${general.log_level}'
+    '${general.speed}'
     --output '${variants_out}'
     --threads \${GALAXY_SLOTS:-4}
 #################
@@ -124,16 +124,35 @@ octopus
 ########################
 ## End Read Filtering ##
 ########################
+
+########################################
+## Begin Candidate Variant Generation ##
+########################################
 '${candidate_variant_generation.raw_cigar_candidate_generator}'
 '${candidate_variant_generation.repeat_candidate_generator}'
 '${candidate_variant_generation.assembly_candidate_generator}'
 #if $candidate_variant_generation.source_candidates:
     --source-candidates '${candidate_variant_generation.source_candidates}'
 #end if
-########################################
-## Begin Candidate Variant Generation ##
-########################################
-
+#if $candidate_variant_generation.min_source_quality:
+    --min-source-quality '${candidate_variant_generation.min_source_quality}'
+#end if
+'${candidate_variant_generation.extract_filtered_source_candidates}'
+--min-base-quality '${candidate_variant_generation.min_base_quality}'
+#if $candidate_variant_generation.min_supporting_reads:
+    --min-supporting-reads '${candidate_variant_generation.min_supporting_reads}'
+#end if
+--max-variant-size '${candidate_variant_generation.max_variant_size}'
+--kmer-sizes '${candidate_variant_generation.kmer_sizes}'
+--num-fallback-kmers '${candidate_variant_generation.num_fallback_kmers}'
+--fallback-kmer-gap '${candidate_variant_generation.fallback_kmer_gap}'
+--max-region-to-assemble '${candidate_variant_generation.max_region_to_assemble}'
+--max-assemble-region-overlap '${candidate_variant_generation.max_assemble_region_overlap}'
+'${candidate_variant_generation.assemble_all}'
+--assembler-mask-base-quality '${candidate_variant_generation.assembler_mask_base_quality}'
+--min-kmer-prune '${candidate_variant_generation.min_kmer_prune}'
+--max-bubbles '${candidate_variant_generation.max_bubbles}'
+--min-bubble-score '${candidate_variant_generation.min_bubble_score}'
 ######################################
 ## End Candidate Variant Generation ##
 ######################################
@@ -141,7 +160,14 @@ octopus
 ################################
 ## Begin Haplotype Generation ##
 ################################
-
+--max-haplotypes '${haplotype_generation.max_haplotypes}'
+--haplotype-holdout-threshold '${haplotype_generation.haplotype_holdout_threshold}'
+--haplotype-overflow '${haplotype_generation.haplotype_overflow}'
+--max-holdout-depth '${haplotype_generation.max_holdout_depth}'
+--extension-level 'haplotype_generation.extension_level'
+--haplotype-extension-threshold '${haplotype_generation.haplotype_extension_threshold}'
+'${haplotype_generation.dedup-haplotypes-with-prior-model}'
+'${haplotype_generation.protect_reference_haplotype}'
 ##############################
 ## End Haplotype Generation ##
 ##############################
@@ -149,7 +175,39 @@ octopus
 ###################
 ## Begin Calling ##
 ###################
-
+--caller '${calling.caller.caller}'
+#if $calling.caller.caller == 'trio':
+--maternal-sample '${calling.caller.maternal_sample}'
+--paternal-sample '${calling.caller.paternal_sample}'
+#elif $calling.caller.caller == 'cancer':
+    #if $calling.caller.normal_sample:
+        --normal-sample '${calling.caller.normal_sample}'
+    #end if
+#end if
+--organism-ploidy '${calling.caller.organism_ploidy}'
+#if $calling.caller.contig_ploidies:
+    --contig-ploidies '${calling.caller.contig_ploidies}'
+#end if
+#if $calling.caller.contig_ploidies_file:
+    --contig-ploidies-file '${calling.caller.contig_ploidies_file}'
+#end if
+--min-variant-posterior '${calling.caller.min_variant_posterior}'
+#if $calling.caller.refcall:
+    --refcall '${calling.caller.refcall}'
+#end if
+--min-refcall-posterior '${calling.caller.min_refcall_posterior}'
+--snp-heterozygosity '${calling.caller.snp_heterozygosity}'
+--snp-heterozygosity-stdev '${calling.caller.snp_heterozygosity_stdev}'
+--indel-heterozygosity '${calling.caller.indel_heterozygosity}'
+'${calling.caller.use_uniform_genotype_priors}'
+--max-genotypes '${calling.caller.max_genotypes}'
+--max-joint-genotypes '${calling.caller.max_joint_genotypes}'
+'${calling.caller.use_independent_genotype_priors}'
+'${calling.caller.model_posterior}'
+'${calling.caller.inactive_flank_scoring}'
+'${calling.caller.model_mapping_quality}'
+--sequence-error-model '${calling.caller.sequence_error_model}'
+--max-vb-seeds '${calling.caller.max_vb_seeds}'
 #################
 ## End Calling ##
 #################
@@ -157,7 +215,8 @@ octopus
 ###################
 ## Begin Phasing ##
 ###################
-
+--phasing-level '${phasing.phasing_level}'
+--min-phase-score '${phasing.min_phase_score}'
 #################
 ## End Phasing ##
 #################
@@ -165,18 +224,46 @@ octopus
 #############################
 ## Begin Variant Filtering ##
 #############################
-
+#if $variant_filtering.variant_filtering.call_filtering == 'on':
+    --call-filtering 1
+    #if $variant_filtering.variant_filtering.filter_expression:
+        --filter-expression '${variant_filtering.variant_filtering.filter_expression}'
+    #end if
+    #if $variant_filtering.variant_filtering.somatic_filter_expression:
+        --filter-expression '${variant_filtering.variant_filtering.somatic_filter_expression}'
+    #end if
+    #if $variant_filtering.variant_filtering.denovo_filter_expression:
+        --filter-expression '${variant_filtering.variant_filtering.denovo_filter_expression}'
+    #end if
+    #if $variant_filtering.variant_filtering.refcall_filter_expression:
+        --filter-expression '${variant_filtering.variant_filtering.refcall_filter_expression}'
+    #end if
+    '${variant_filtering.variant_filtering.use_calling_reads_for_filtering}'
+    '${variant_filtering.variant_filtering.keep_unfiltered_calls}'
+    '${variant_filtering.variant_filtering.training_annotations}'
+    #if $variant_filtering.variant_filtering.forest_file:
+        --forest-file '${variant_filtering.variant_filtering.forest_file}'
+    #end if
+    #if $variant_filtering.variant_filtering.somatic_forest_file:
+        --somatic-forest-file '${variant_filtering.variant_filtering.somatic_forest_file}'
+    #end if
+#else:
+    --call-filtering 0
+#end if
 ###########################
 ## End Variant Filtering ##
 ###########################
-
-&& cat octopus_debug.log 1>&2
+#if $general.log_level == 'debug':
+    && cat octopus_debug.log 1>&2
+#elif $general.log_level == 'trace':
+    && cat octopus_trace.log 1>&2
+#end if
     ]]></command>
     <inputs>
         <section name="general" title="General" expanded="false">
             <param name="log_level" type="select" label="" help="">
                 <option value="--debug" selected="true">Write verbose debug info to stderr</option>
-                <option value="--trace">Write very verbose debug info to stderr</option>
+                <option value="--trace">Write very verbose debug info to stderr. WARNING - very slow and not reccomended</option>
             </param>
             <param name="speed" type="select" label="" help="Fast is equivalent to '-a off -l minimal -x 50'">
                 <option value="" selected="true">Default accuracy to speed parameters</option>
@@ -284,9 +371,9 @@ octopus
             <param argument="--haplotype-overflow" type="integer" value="200000" label="Regions with more haplotypes than this will be skipped"/>
             <param argument="--max-holdout-depth" type="integer" value="20" label="Maximum number of holdout attempts the haplotype generator can make before the region is skipped"/>
             <param argument="--extension-level" type="select">
-                <option value="normal" selected="true">Normal</option>
                 <option value="conservative">Conservative</option>
                 <option value="optimistic">Optimistic</option>
+                <option value="normal" selected="true">Normal</option>
                 <option value="aggressive">Aggressive</option>
             </param>
             <param argument="--haplotype-extension-threshold" type="float" value="100.0" label="Haplotypes with posterior probability less than this can be filtered before extension"/>
@@ -297,7 +384,7 @@ octopus
             <conditional name="caller">
                 <param argument="--caller" type="select" label="Which of the octopus callers should be used?">
                     <option value="individual"></option>
-                    <option value="population"></option>
+                    <option value="population" selected="true"></option>
                     <option value="trio"></option>
                     <option value="cancer"></option>
                     <!-- These are added in later versions -->
