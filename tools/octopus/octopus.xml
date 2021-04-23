@@ -76,12 +76,12 @@ octopus
             <param argument="--samples" type="text" label="Sample names to analyse"/> <!-- TODO - make repeat -->
             <param argument="--samples-file" type="data" format="text,tabular" optional="true" label="File of sample names to analyse" help="File should have one sample name per line. Must be a subset of the samples that appear in the read files."/>
             <param argument="--ignore-unmapped-contigs" type="boolean" truevalue="--ignore-unmapped-contigs" falsevalue="" checked="false" label="Ignore any contigs that are not present in the read files?"/>
-            <param argument="--pedigree" type="data" type="ped" optional="true" label="PED file containing sample pedigree"/> <!-- TODO - check that this is a valid filetype, make txt if not -->
+            <param argument="--pedigree" type="data" format="ped" optional="true" label="PED file containing sample pedigree"/> <!-- TODO - check that this is a valid filetype, make txt if not -->
             <param argument="--contig-output-order" type="select" label="The order contigs should be written in the output">
                 <option value="asInReferenceIndex">asInReferenceIndex</option> <!-- TODO - see if there are other options-->
             </param>
             <param argument="--sites-only" type="boolean" truevalue="--sites-only" falsevalue="" checked="false" label="Only report call sites" help="i.e. report sites without sample genotype information"/>
-            <param argument="--regenotype" type="data" type="vcf" optional="true" label="VCF file specifying calls to regenotype, only sites in this file will appear in the final output"/> <!-- This is subject to change in later releases-->
+            <param argument="--regenotype" type="data" format="vcf" optional="true" label="VCF file specifying calls to regenotype, only sites in this file will appear in the final output"/> <!-- This is subject to change in later releases-->
             <param argument="--legacy" type="boolean" truevalue="--legacy" falsevalue="" checked="false" label="Output a legacy version of final callset in addition to the native version?"/>
             <param argument="--bamout" type="boolean" truevalue="--bamout " falsevalue="" checked="false" label="Output realigned BAM files?"/>
             <param argument="--split-bamout" type="boolean" truevalue="--split-bamout" falsevalue="" checked="false" label="Output split realigned BAM files?"/>
@@ -180,20 +180,20 @@ octopus
                     <!-- <option value="polyclone"></option>
                     <option value="cell"></option> --> <!-- These are added in later versions -->
                 </param>
-                <when value="individual"/>
+                <when value="individual">
                 </when>
-                <when value="population"/>
+                <when value="population">
                 </when>
-                <when value="trio"/>
+                <when value="trio">
                     <param argument="--maternal-sample"/>
                     <param argument="--paternal-sample"/>
                 </when>
-                <when value="cancer"/>
+                <when value="cancer">
                     <param argument="--normal-sample" optional="true"/>
                 </when>
-                <when value="polyclone"/>
+                <when value="polyclone">
                 </when>
-                <when value="cell"/>
+                <when value="cell">
                 </when>
             </conditional>
             <param argument="--organism-ploidy" type="integer" value="2" label="Organism ploidy" help="All contigs with unspecified ploidies are assumned the organism ploidy"/>
@@ -232,17 +232,18 @@ octopus
             <param argument="--min-phase-score" type="integer" value="10" label="Minumum phase score (PHRED scale) required to report sites as phased"/>
         </section>
         <section name="variant_filtering" title="Variant filtering">
-            <conditional value=>
-            <param argument="--call-filtering"/>
-            <param argument="--filter-expression"/>
-            <param argument="--somatic-filter-expression"/>
-            <param argument="--denovo-filter-expression"/>
-            <param argument="--refcall-filter-expression"/>
-            <param argument="--use-calling-reads-for-filtering" type="boolean" truevalue=""/>
-            <param argument="--keep-unfiltered-calls" type="boolean" truevalue="--keep-unfiltered-calls" falsevalue="" checked="false" label="Keep a copy of unfiltered calls?"/>
-            <param argument="--training-annotations" type=""/>
-            <!-- <param argument="forest-file" optional="true"/>
-            <param argument="somatic-forest-file" optional="true"/> --> <!-- TODO - Add this in? might need new data type?-->
+            <conditional name="variant_filtering">
+                <param argument="--call-filtering"/>
+                <param argument="--filter-expression"/>
+                <param argument="--somatic-filter-expression"/>
+                <param argument="--denovo-filter-expression"/>
+                <param argument="--refcall-filter-expression"/>
+                <param argument="--use-calling-reads-for-filtering" type="boolean" truevalue=""/>
+                <param argument="--keep-unfiltered-calls" type="boolean" truevalue="--keep-unfiltered-calls" falsevalue="" checked="false" label="Keep a copy of unfiltered calls?"/>
+                <param argument="--training-annotations" type=""/>
+                <!-- <param argument="forest-file" optional="true"/>
+                <param argument="somatic-forest-file" optional="true"/> --> <!-- TODO - Add this in? might need new data type?-->
+            </conditional>
         </section>
     </inputs>
     <outputs>
